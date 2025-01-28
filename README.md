@@ -2,5 +2,12 @@
 # Ticket Booking Application
 # This application is the process of booking your movie ticket
 # Nithin
-## Cancellations/Modification
-###
+### Cancellations/Modification
+# Sandeep
+### Payment Options
+# Bharat
+### Locations &Ticket Availability
+# Navya
+### Refunds
+# Rushi
+### Recommendations
