@@ -1,4 +1,4 @@
-# 5200-IS Software_Development
+# 5200-IS-Software_Development
 # The BookingBliss
 ## This application is the process of booking your movie ticket
 # Nithin
