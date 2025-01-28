@@ -10,7 +10,7 @@
 # Navya
 ### Refunds
 # Rushi
-### Recommendations
+### Feedback/Ratings
 # Dheeraj
 ### Selecting the seat
 # Meenakshi
