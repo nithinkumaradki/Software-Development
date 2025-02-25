@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blackjack Master</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2e7d32, #4caf50);
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+        #gameArea {
+            width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        #dealerCards, #playerCards {
+            min-height: 150px;
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .card {
+            width: 100px;
+            height: 140px;
+            background: #fff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            color: #000;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+        .card.hidden {
+            background: #d32f2f;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        #controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #2196f3;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #message {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #score {
+            font-size: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameArea">
+        <div id="score">Wins: 0 | Losses: 0</div>
+        <div id="dealerCards"></div>
+        <div id="message">Welcome to Blackjack!</div>
+        <div id="playerCards"></div>
+        <div id="controls">
+            <button id="dealBtn" onclick="deal()">Deal</button>
+            <button id="hitBtn" onclick="hit()" disabled>Hit</button>
+            <button id="standBtn" onclick="stand()" disabled>Stand</button>
+        </div>
+    </div>
+
+    <script>
+        const suits = ['♠', '♥', '♣', '♦'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let deck = [];
+        let playerHand = [];
+        let dealerHand = [];
+        let wins = 0;
+        let losses = 0;
+        let gameActive = false;
+
+        const dealerCards = document.getElementById('dealerCards');
+        const playerCards = document.getElementById('playerCards');
+        const message = document.getElementById('message');
+        const score = document.getElementById('score');
+        const dealBtn = document.getElementById('dealBtn');
+        const hitBtn = document.getElementById('hitBtn');
+        const standBtn = document.getElementById('standBtn');
+
+        function createDeck() {
+            deck = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    deck.push({ suit, value });
+                }
+            }
+            deck = deck.sort(() => Math.random() - 0.5); // Shuffle
+        }
+
+        function getCardValue(card) {
+            if (['J', 'Q', 'K'].includes(card.value)) return 10;
+            if (card.value === 'A') return 11; // We'll adjust for aces later
+            return parseInt(card.value);
+        }
+
+        function calculateHand(hand) {
+            let sum = 0;
+            let aces = 0;
+            hand.forEach(card => {
+                if (card.value === 'A') aces++;
+                sum += getCardValue(card);
+            });
+            while (sum > 21 && aces > 0) {
+                sum -= 10;
+                aces--;
+            }
+            return sum;
+        }
+
+        function renderCard(card, container, hidden = false) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card' + (hidden ? ' hidden' : '');
+            if (!hidden) {
+                cardDiv.innerHTML = `
+                    <div>${card.value}${card.suit}</div>
+                    <div style="font-size: 40px; text-align: center">${card.suit}</div>
+                    <div style="transform: rotate(180deg)">${card.value}${card.suit}</div>
+                `;
+                cardDiv.style.color = ['♥', '♦'].includes(card.suit) ? '#d32f2f' : '#000';
+            }
+            container.appendChild(cardDiv);
+        }
+
+        function clearHands() {
+            dealerCards.innerHTML = '';
+            playerCards.innerHTML = '';
+            playerHand = [];
+            dealerHand = [];
+        }
+
+        function deal() {
+            if (deck.length < 10) createDeck();
+            clearHands();
+            gameActive = true;
+            dealBtn.disabled = true;
+            hitBtn.disabled = false;
+            standBtn.disabled = false;
+            message.textContent = "Hit or Stand?";
+
+            // Initial deal
+            playerHand.push(deck.pop(), deck.pop());
+            dealerHand.push(deck.pop(), deck.pop());
+
+            // Render cards
+            renderCard(dealerHand[0], dealerCards);
+            renderCard(dealerHand[1], dealerCards, true); // One card hidden
+            playerHand.forEach(card => renderCard(card, playerCards));
+
+            if (calculateHand(playerHand) === 21) endGame(true);
+        }
+
+        function hit() {
+            playerHand.push(deck.pop());
+            renderCard(playerHand[playerHand.length - 1], playerCards);
+            const playerTotal = calculateHand(playerHand);
+            if (playerTotal > 21) {
+                endGame(false);
+            }
+        }
+
+        function stand() {
+            gameActive = false;
+            hitBtn.disabled = true;
+            standBtn.disabled = true;
+
+            // Reveal dealer's hidden card
+            dealerCards.innerHTML = '';
+            dealerHand.forEach(card => renderCard(card, dealerCards));
+
+            // Dealer draws until 17 or higher
+            while (calculateHand(dealerHand) < 17) {
+                dealerHand.push(deck.pop());
+                renderCard(dealerHand[dealerHand.length - 1], dealerCards);
+            }
+
+            endGame(calculateHand(playerHand) <= 21 && 
+                   (calculateHand(dealerHand) > 21 || calculateHand(playerHand) > calculateHand(dealerHand)));
+        }
+
+        function endGame(playerWins) {
+            gameActive = false;
+            hitBtn.disabled = true;
+            standBtn.disabled = true;
+            dealBtn.disabled = false;
+
+            const playerTotal = calculateHand(playerHand);
+            const dealerTotal = calculateHand(dealerHand);
+
+            if (playerWins) {
+                wins++;
+                message.textContent = `You win! (${playerTotal} vs ${dealerTotal})`;
+            } else {
+                losses++;
+                message.textContent = `Dealer wins! (${playerTotal} vs ${dealerTotal})`;
+            }
+            score.textContent = `Wins: ${wins} | Losses: ${losses}`;
+        }
+
+        // Start with a fresh deck
+        createDeck();
+    </script>
+</body>
+</html>
